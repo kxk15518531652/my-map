@@ -1,11 +1,13 @@
 // ============================================================
-// maptest05 · 徐汇校区电子地图（带欢迎页）
+// maptest07 · 徐汇校区电子地图（带欢迎页）
 // 两栋建筑共用：点击放大、详情页、2秒自动轮播、大图预览和音效
 // ============================================================
 const welcomeScreen = document.getElementById('welcomeScreen');
 const enterCampusButton = document.getElementById('enterCampusButton');
 const campusApp = document.getElementById('campusApp');
 const mapWorld = document.getElementById('mapWorld');
+const mapViewport = document.getElementById('mapViewport');
+const mapScrollLayer = document.getElementById('mapScrollLayer');
 const detailOverlay = document.getElementById('detailOverlay');
 const infoPanel = document.getElementById('infoPanel');
 const closeButton = document.getElementById('closeButton');
@@ -54,7 +56,7 @@ const BUILDINGS = {
       ['规模', '就餐面积超2500㎡，座位近1100个'],
       ['特色', '深夜食堂、华理红烧肉、支持小份/半份']
     ],
-    photos: ['images/canteen-1.jpg', 'images/canteen-2.jpg', 'images/canteen-3.jpg']
+    photos: ['images/canteen-1.webp', 'images/canteen-2.webp', 'images/canteen-3.webp']
   },
   heping: {
     title: '和平楼',
@@ -72,7 +74,7 @@ const BUILDINGS = {
       ['用途', '行政办公、会议研讨'],
       ['历史', '学校初建时期（20世纪50年代）']
     ],
-    photos: ['images/heping-1.jpg', 'images/heping-2.jpg', 'images/heping-3.jpg']
+    photos: ['images/heping-1.webp', 'images/heping-2.webp', 'images/heping-3.webp']
   }
 };
 
@@ -84,7 +86,7 @@ let lastImageButton = null;
 let musicManuallyPaused = false;
 
 // ===== 背景音乐与点击“啵”声 =====
-campusMusic.volume = 1.00; // 背景音乐音量：0~1，可自行调整
+campusMusic.volume = 0.85; // 背景音乐音量：0~1，可自行调整
 buildingPop.volume = 0.65;
 
 function updateMusicButton() {
@@ -134,6 +136,7 @@ enterCampusButton.addEventListener('click', () => {
     welcomeScreen.hidden = true;
     document.body.classList.remove('welcome-active');
     campusApp.removeAttribute('inert');
+    window.requestAnimationFrame(centerMobileMapInitially);
 
     if (ENABLE_CLOUD_INTRO && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.body.classList.add('cloud-intro-playing');
@@ -209,6 +212,7 @@ function renderBuildingDetail(data) {
   slides.forEach((slide, i) => {
     const img = slide.querySelector('img');
     img.src = data.photos[i];
+    img.loading = i === 0 ? "eager" : "lazy";
     img.alt = `${data.title}照片 ${i + 1}`;
     imageButtons[i].setAttribute('aria-label', `放大查看第 ${i + 1} 张${data.title}图片`);
   });
@@ -248,7 +252,9 @@ function openBuilding(key) {
   const baseHeight = mapWorld.offsetHeight;
   const moveX = -(data.point.x - 0.5) * baseWidth * ZOOM;
   const moveY = -(data.point.y - 0.5) * baseHeight * ZOOM;
-  mapWorld.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) scale(${ZOOM})`;
+  if (!window.matchMedia('(max-width: 700px)').matches) {
+    mapWorld.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) scale(${ZOOM})`;
+  }
 
   detailOverlay.setAttribute('aria-hidden', 'false');
   infoPanel.setAttribute('aria-hidden', 'false');
@@ -311,6 +317,23 @@ Object.keys(BUILDINGS).forEach(key => {
   hotspot.addEventListener('blur', () => setBuildingHover(key, false));
   hotspot.addEventListener('click', () => openBuilding(key));
 });
+// ========== maptest07 手机：地图填屏横向滑动 + 更大的建筑点击按钮 ==========
+function centerMobileMapInitially() {
+  if (!window.matchMedia('(max-width: 700px)').matches) return;
+  // 手机默认视野放在和平楼与中心草坪附近，保证入口标记完整显示。
+  // 另一栋一食堂可向右滑动查看，也可使用底部快捷按钮直接进入。
+  const initialFocusX = 0.59;
+  mapScrollLayer.scrollLeft = Math.max(0, initialFocusX * mapWorld.offsetWidth - mapScrollLayer.clientWidth / 2);
+}
+window.requestAnimationFrame(centerMobileMapInitially);
+window.addEventListener('resize', () => window.requestAnimationFrame(centerMobileMapInitially));
+// 加大触控按钮，但仍提供精确的楼体多边形交互。
+document.getElementById('mobileCanteenButton').addEventListener('click', () => openBuilding('canteen'));
+document.getElementById('mobileHepingButton').addEventListener('click', () => openBuilding('heping'));
+document.getElementById('mapPinCanteen').addEventListener('click', () => openBuilding('canteen'));
+document.getElementById('mapPinHeping').addEventListener('click', () => openBuilding('heping'));
+// ========== 手机适配结束 ==========
+
 closeButton.addEventListener('click', closeBuilding);
 prevSlideButton.addEventListener('click', () => switchSlide(currentSlide - 1));
 nextSlideButton.addEventListener('click', () => switchSlide(currentSlide + 1));

@@ -2,8 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>maptest05 · 华东理工大学校园电子地图</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fff8df" />
+  <link rel="preload" href="images/welcome-map.webp" as="image" type="image/webp" />
+  <title>maptest07 · 华东理工大学校园电子地图</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="welcome-active">
@@ -47,11 +49,12 @@
     </header>
 
     <section class="map-viewport" id="mapViewport">
-      <div class="map-world" id="mapWorld">
-        <img src="images/campus-map.jpg" alt="徐汇校区电子地图" class="map-image" />
+      <div class="map-scroll-layer" id="mapScrollLayer" aria-label="可左右移动的校园地图">
+        <div class="map-world" id="mapWorld">
+        <img src="images/campus-map.webp" alt="徐汇校区电子地图" class="map-image" fetchpriority="high" decoding="async" />
 
         <div class="building-interactive canteen-interactive" id="canteenInteractive">
-          <img class="building-preview" src="images/canteen-building.png" alt="" aria-hidden="true" draggable="false" />
+          <img class="building-preview" src="images/canteen-building.webp" alt="" aria-hidden="true" draggable="false" />
           <button
             class="building-hotspot"
             id="canteenHotspot"
@@ -63,11 +66,25 @@
 
         <!-- ========== 和平楼建筑轮廓热区：独立于一食堂，避免全图误触 ========== -->
         <div class="building-interactive heping-interactive" id="hepingInteractive">
-          <img class="building-preview" src="images/heping-building.png" alt="" aria-hidden="true" draggable="false" />
+          <img class="building-preview" src="images/heping-building.webp" alt="" aria-hidden="true" draggable="false" />
           <button class="building-hotspot" id="hepingHotspot" type="button" aria-label="打开和平楼详情"></button>
           <div class="hotspot-label" aria-hidden="true">和平楼</div>
         </div>
+        <!-- 手机专用大面积地点按钮，代替难以点中的精细多边形。 -->
+        <button class="map-pin map-pin--canteen" type="button" id="mapPinCanteen" aria-label="查看一食堂详情">一食堂</button>
+        <button class="map-pin map-pin--heping" type="button" id="mapPinHeping" aria-label="查看和平楼详情">和平楼</button>
       </div>
+      </div>
+
+      <!-- ========== maptest07：手机地图快捷入口 ========== -->
+      <nav class="mobile-map-guide" aria-label="手机地图建筑快捷入口">
+        <span class="mobile-map-guide__tip">← 左右滑动探索地图 →</span>
+        <div class="mobile-map-guide__buttons">
+          <button type="button" id="mobileCanteenButton">一食堂 <span aria-hidden="true">↗</span></button>
+          <button type="button" id="mobileHepingButton">和平楼 <span aria-hidden="true">↗</span></button>
+        </div>
+      </nav>
+      <!-- ========== 手机快捷入口结束 ========== -->
 
       <!-- ========== 云雾入场特效 HTML 开始（可选功能） ========== -->
       <div class="cloud-intro" aria-hidden="true">
@@ -87,19 +104,19 @@
                 <div class="carousel-track">
                   <figure class="carousel-slide is-active">
                     <button class="carousel-image-button" type="button" aria-label="放大查看第 1 张一食堂图片" data-slide="0">
-                      <img src="images/canteen-1.jpg" alt="一食堂航拍图 1" />
+                      <img loading="lazy" decoding="async" data-original="images/canteen-1.webp" alt="一食堂航拍图 1" />
                       <span class="image-zoom-hint" aria-hidden="true">⤢ 点击查看大图</span>
                     </button>
                   </figure>
                   <figure class="carousel-slide">
                     <button class="carousel-image-button" type="button" aria-label="放大查看第 2 张一食堂图片" data-slide="1">
-                      <img src="images/canteen-2.jpg" alt="一食堂航拍图 2" />
+                      <img loading="lazy" decoding="async" data-original="images/canteen-2.webp" alt="一食堂航拍图 2" />
                       <span class="image-zoom-hint" aria-hidden="true">⤢ 点击查看大图</span>
                     </button>
                   </figure>
                   <figure class="carousel-slide">
                     <button class="carousel-image-button" type="button" aria-label="放大查看第 3 张一食堂图片" data-slide="2">
-                      <img src="images/canteen-3.jpg" alt="一食堂航拍图 3" />
+                      <img loading="lazy" decoding="async" data-original="images/canteen-3.webp" alt="一食堂航拍图 3" />
                       <span class="image-zoom-hint" aria-hidden="true">⤢ 点击查看大图</span>
                     </button>
                   </figure>
@@ -149,11 +166,8 @@
   </main>
 
   <!-- 音乐素材已保存在本地 audio/ 文件夹，无需联网。 -->
-  <audio id="campusMusic" preload="auto" loop>
-    <source src="audio/campus-background.ogg" type="audio/ogg" />
-    <source src="audio/campus-background.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="canteenPop" src="audio/pop.wav" preload="auto"></audio>
+  <audio id="campusMusic" preload="none" loop src="audio/campus-background.mp3"></audio>
+  <audio id="canteenPop" src="audio/pop.wav" preload="none"></audio>
 
   <script src="script.js"></script>
 </body>

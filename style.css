@@ -1057,11 +1057,12 @@ body.cloud-intro-playing .map-image {
   position: absolute;
   inset: -24px;
   z-index: -2;
-  background-image: url('images/campus-map.jpg');
+  background-image: url('images/welcome-map.webp');
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;
-  filter: blur(9px) saturate(.88) brightness(.96);
+  /* 已预处理模糊背景，避免移动端实时滤镜性能开销 */
+  filter: none;
   transform: scale(1.025);
   pointer-events: none;
 }
@@ -1161,3 +1162,289 @@ body.cloud-intro-playing .map-image {
   .welcome-screen, .welcome-enter { transition: none; }
 }
 /* ============== 网页欢迎页 CSS 结束 ============== */
+
+
+/* ============================================================
+   maptest06：手机适配模块（可独立修改或删除）
+   桌面依旧展示完整地图；手机把地图放大并允许原生左右滑动。
+   两栋建筑的多边形热区不变，仍与地图上的建筑精确对齐。
+   ============================================================ */
+.mobile-map-guide { display: none; }
+
+@media (max-width: 700px) {
+  html, body, .app { height: 100%; height: 100dvh; }
+
+  .topbar {
+    height: 66px;
+    flex: 0 0 66px;
+    padding: 10px 13px;
+    gap: 8px;
+  }
+  .topbar .eyebrow { font-size: 9px; }
+  .topbar h1 { font-size: clamp(12px, 3.7vw, 16px); letter-spacing: 0; }
+  .topbar-actions { flex: 0 0 auto; }
+  .music-toggle { min-height: 38px; padding: 8px 11px; white-space: nowrap; }
+  #musicToggleText { display: none; }
+  .music-symbol { font-size: 20px; }
+
+  .map-viewport {
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    scrollbar-width: none;
+  }
+  .map-viewport::-webkit-scrollbar { display: none; }
+
+  /* 宽图保持可辨认的建筑尺寸，不把整张地图压缩到手机宽度。 */
+  .map-world {
+    position: relative;
+    left: auto;
+    top: auto;
+    flex: 0 0 auto;
+    width: clamp(990px, calc((100dvh - 66px) * 2), 1320px);
+    aspect-ratio: 2 / 1;
+    transform: none !important;
+    transition: none;
+  }
+
+  .mobile-map-guide {
+    position: fixed;
+    z-index: 35;
+    left: 14px;
+    right: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .mobile-map-guide__tip {
+    padding: 6px 12px;
+    background: rgba(66, 52, 24, .80);
+    border-radius: 100px;
+    color: #fffdf4;
+    font-size: 12px;
+    letter-spacing: .02em;
+    box-shadow: 0 3px 10px rgba(0,0,0,.12);
+  }
+  .mobile-map-guide__buttons {
+    width: min(100%, 380px);
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+  }
+  .mobile-map-guide__buttons button {
+    flex: 1;
+    min-width: 0;
+    min-height: 46px;
+    padding: 10px 14px;
+    border: 1px solid rgba(183, 134, 34, .36);
+    border-radius: 14px;
+    background: rgba(255, 250, 229, .96);
+    color: #725313;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 8px 25px rgba(64,47,18,.17);
+    cursor: pointer;
+  }
+  .mobile-map-guide__buttons button span { color: #ad862e; }
+  body.detail-open .mobile-map-guide { display: none; }
+
+  /* 弹窗固定于屏幕而不是随横向滑动的地图移动。 */
+  .detail-overlay, .photo-preview { position: fixed; inset: 0; }
+  .detail-overlay { padding: 12px; }
+  .detail-card {
+    width: min(100%, 540px);
+    max-height: calc(100dvh - 24px);
+    aspect-ratio: auto;
+    overflow: hidden;
+    border-radius: 23px;
+  }
+  .detail-card-inner {
+    display: block;
+    height: auto;
+    max-height: calc(100dvh - 28px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .detail-media { padding: 20px 20px 8px; }
+  .carousel { width: 100%; height: auto; max-height: none; aspect-ratio: 1 / 1; }
+  .detail-content, .detail-card--heping .detail-content { padding: 14px 22px 30px; }
+  .detail-content h2 { font-size: 31px; }
+  .detail-text, .detail-card--heping .detail-text { font-size: 14px; line-height: 1.85; }
+  .detail-highlights { margin-top: 16px; }
+  .close-button { top: 11px; right: 11px; width: 42px; height: 42px; }
+  .photo-preview { padding: 14px; }
+}
+
+@media (max-width: 360px) {
+  .topbar h1 { font-size: 12px; }
+  .mobile-map-guide { left: 9px; right: 9px; }
+  .detail-media { padding: 17px 17px 7px; }
+  .detail-content, .detail-card--heping .detail-content { padding: 12px 18px 24px; }
+}
+
+
+/* ==========================================================
+   maptest07 · 高优先级手机适配与加载优化（可单独修改）
+   解决地图出现大量空白、点击区域过小、弹窗被裁剪问题。
+   关键：地图滚动层独立于详情弹窗，避免固定层被滚动容器裁掉。
+   ========================================================== */
+.map-scroll-layer { position: absolute; inset: 0; overflow: visible; }
+.map-pin { display: none; }
+/* 非打开状态的遮罩从绘制和命中树中隐藏，避免网页误发暗 */
+.detail-overlay { visibility: hidden; }
+body.detail-open .detail-overlay { visibility: visible; }
+@media (max-width: 700px) {
+  :root { color-scheme: light; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
+  .app { width: 100%; height: 100dvh; min-height: 0; overflow: hidden; }
+  .topbar { height: 62px; flex: 0 0 62px; padding: 9px 12px; background: rgba(255,252,241,.97); }
+  .topbar h1 { font-size: clamp(13px, 3.65vw, 16px); }
+  .topbar .eyebrow { font-size: 9px; }
+  .music-toggle { padding: 7px 12px; min-width: 44px; min-height: 44px; }
+  .map-viewport {
+    position: relative; flex: 1 1 0; min-height: 0; display: block;
+    overflow: hidden; background: #e5e6df;
+  }
+  .map-scroll-layer {
+    position: absolute; inset: 0; z-index: 1;
+    display: block; width: 100%; height: 100%;
+    overflow-x: auto; overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x; scrollbar-width: none;
+  }
+  .map-scroll-layer::-webkit-scrollbar { display: none; }
+  .map-world {
+    position: relative; left: auto; top: auto; display: block; flex: none;
+    height: 100%; width: auto; aspect-ratio: 2 / 1;
+    max-width: none; min-width: 100%;
+    transform: none !important; transition: none !important;
+  }
+  .map-image { width: 100%; height: 100%; object-fit: fill; }
+  .building-preview { transition-duration: 160ms; }
+  /* 高清底图仍保持正确坐标，但手机精确热点小，使用可见的触摸按钮 */
+  .map-pin {
+    display: flex; align-items: center; justify-content: center;
+    position: absolute; z-index: 4;
+    min-width: 76px; min-height: 44px;
+    padding: 8px 12px;
+    color: #6b5019; font-size: 14px; font-weight: 700;
+    background: #fff8df; border: 2px solid rgba(186,142,45,.85);
+    border-radius: 100px; box-shadow: 0 3px 16px rgba(70,48,10,.22);
+    transform: translate(-50%, -125%);
+    pointer-events: auto; cursor: pointer; touch-action: manipulation;
+  }
+  .map-pin::after {
+    content: ''; position: absolute; top: calc(100% - 1px); left: 50%; transform: translateX(-50%);
+    border-width: 8px 7px 0; border-style: solid;
+    border-color: #b58b2f transparent transparent;
+  }
+  .map-pin--canteen { left: 72.5%; top: 39.7%; }
+  .map-pin--heping { left: 50.95%; top: 55.25%; }
+  .hotspot-label { display: none; }
+  .mobile-map-guide {
+    position: absolute; z-index: 18;
+    left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
+    display: flex; pointer-events: none;
+  }
+  .mobile-map-guide__tip { padding: 6px 12px; font-size: 12px; }
+  .mobile-map-guide__buttons { width: 100%; max-width: 360px; }
+  .mobile-map-guide__buttons button { min-height: 48px; font-size: 14px; touch-action: manipulation; }
+  body.detail-open .mobile-map-guide { display: none; }
+  /* 详情浮层脱离滚动层，占满可见手机浏览器高度 */
+  .detail-overlay {
+    position: fixed !important; inset: 0 !important; z-index: 60;
+    display: flex; align-items: stretch; justify-content: center;
+    padding: 0 !important; margin: 0;
+    background: rgba(44,36,19,.48);
+    backdrop-filter: none;
+    visibility: hidden;
+  }
+  body.detail-open .detail-overlay { visibility: visible; }
+  .detail-card {
+    display: block; align-self: stretch;
+    width: 100%; max-width: none;
+    height: 100dvh; max-height: 100dvh;
+    margin: 0; padding: 0;
+    border: 0; border-radius: 0;
+    background: #fff9e8;
+    overflow: hidden;
+    aspect-ratio: auto;
+    transform: translateY(12px);
+  }
+  body.detail-open .detail-card { transform: translateY(0); }
+  .detail-card::before { display: none; }
+  .close-button {
+    position: fixed; top: max(12px, env(safe-area-inset-top)); right: 14px;
+    width: 48px; height: 48px;
+    border: 1px solid rgba(175,137,45,.22);
+    background: rgba(255,249,227,.97);
+    box-shadow: 0 4px 20px rgba(84,56,24,.24);
+  }
+  .detail-card-inner {
+    display: flex; flex-direction: column;
+    width: 100%; height: 100%; max-height: 100%;
+    overflow-x: hidden; overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .detail-media { flex: none; display: block; padding: 15px 15px 6px; margin: 0; min-height: 0; }
+  .carousel {
+    width: 100%; height: min(38dvh, 370px);
+    max-height: none; aspect-ratio: auto;
+    border-radius: 21px;
+    background: #f6eccc;
+  }
+  .carousel-track, .carousel-slide, .carousel-image-button, .carousel-slide img { border-radius: 21px; }
+  .carousel-slide img { object-fit: cover; }
+  .carousel-nav { width: 42px; height: 42px; font-size: 28px; }
+  .carousel-nav.prev { left: 9px; }
+  .carousel-nav.next { right: 9px; }
+  .carousel-dots { bottom: 12px; }
+  .image-zoom-hint { opacity: 1; font-size: 11px; }
+  .detail-content, .detail-card--heping .detail-content {
+    flex: none; width: 100%;
+    display: block; height: auto; min-height: 0;
+    padding: 14px 21px 32px;
+  }
+  .detail-content h2 { font-size: 32px; line-height: 1.2; }
+  .detail-badges, .detail-card--heping .detail-badges { margin: 10px 0 18px; gap: 8px; }
+  .detail-badge { padding: 7px 13px; font-size: 13px; min-height: 30px; }
+  .detail-text, .detail-card--heping .detail-text {
+    margin: 0; font-size: 14px; line-height: 1.85;
+    overflow-wrap: anywhere; color: #5b4c30;
+  }
+  .detail-text p + p, .detail-card--heping .detail-text p + p { margin-top: 11px; }
+  .detail-highlights, .detail-card--heping .detail-highlights {
+    margin: 17px 0 0; padding: 0; gap: 9px;
+  }
+  .detail-highlights li, .detail-card--heping .detail-highlights li {
+    padding: 11px 13px; font-size: 13px; line-height: 1.55;
+  }
+  .photo-preview { position: fixed; inset: 0; z-index: 100; padding: 13px; backdrop-filter: none; }
+  .photo-preview-frame { width: min(92vw, 75dvh); height: auto; max-height: none; aspect-ratio: 1/1; }
+  .photo-preview-img { aspect-ratio: 1/1; }
+  /* 手机避免大面积高斯模糊：入场由透明度和轻量平移动画实现 */
+  body.cloud-intro-playing .cloud-intro__left,
+  body.cloud-intro-playing .cloud-intro__right { filter: none; }
+  body.cloud-intro-playing .map-image { animation: none; }
+}
+@media (max-width: 360px) {
+  .topbar h1 { font-size: 13px; }
+  .detail-media { padding: 12px 12px 4px; }
+  .carousel { height: min(36dvh, 300px); }
+  .detail-content, .detail-card--heping .detail-content { padding: 12px 16px 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail-card, .welcome-screen, .building-preview { transition: none !important; }
+}
