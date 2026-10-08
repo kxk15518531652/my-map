@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>maptest05 · 华东理工大学校园电子地图</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="welcome-active">
+  <!-- ==========================================================
+       网页欢迎页 HTML：地图背景由 CSS 添加模糊，文字层不模糊。
+       点击按钮才进入地图并开始播放音乐；不需要额外背景图片。
+       ========================================================== -->
+  <section class="welcome-screen" id="welcomeScreen" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <div class="welcome-screen__background" aria-hidden="true"></div>
+    <div class="welcome-screen__shade" aria-hidden="true"></div>
+    <div class="welcome-card">
+      <div class="welcome-card__eyebrow"><span class="welcome-card__eyebrow-dot"></span> ECUST · CAMPUS EXPLORER</div>
+      <div class="welcome-card__rule" aria-hidden="true"></div>
+      <p class="welcome-card__overline">华东理工大学 · 徐汇校区</p>
+      <h2 id="welcomeTitle">漫步华理<br><span>探索校园</span></h2>
+      <p class="welcome-card__description">从一栋建筑开始，遇见校园里的故事与风景。</p>
+      <button class="welcome-enter" id="enterCampusButton" type="button">
+        <span class="welcome-enter__label">进入校园 · 开启音乐</span>
+        <span class="welcome-enter__arrow" aria-hidden="true">→</span>
+      </button>
+      <p class="welcome-card__note">点击进入后播放校园音乐，你也可以随时暂停。</p>
+    </div>
+    <span class="welcome-corner welcome-corner--left" aria-hidden="true">ECUST / XUHUI</span>
+    <span class="welcome-corner welcome-corner--right" aria-hidden="true">CAMPUS MAP · 2026</span>
+  </section>
+  <!-- ============== 网页欢迎页 HTML 结束 ============== -->
+
+  <main class="app" id="campusApp" inert>
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">ECUST · CAMPUS MAP</div>
+        <h1>徐汇校区 · 校园电子地图</h1>
+      </div>
+      <div class="topbar-actions">
+        <span class="hint">鼠标悬浮查看建筑，点击进入详情</span>
+        <button class="music-toggle" id="musicToggle" type="button" aria-label="开启背景音乐" title="点击开启校园背景音乐">
+          <span class="music-symbol" aria-hidden="true">♫</span>
+          <span id="musicToggleText">开启音乐</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="map-viewport" id="mapViewport">
+      <div class="map-world" id="mapWorld">
+        <img src="images/campus-map.jpg" alt="徐汇校区电子地图" class="map-image" />
+
+        <div class="building-interactive canteen-interactive" id="canteenInteractive">
+          <img class="building-preview" src="images/canteen-building.png" alt="" aria-hidden="true" draggable="false" />
+          <button
+            class="building-hotspot"
+            id="canteenHotspot"
+            type="button"
+            aria-label="打开一食堂详情"
+          ></button>
+          <div class="hotspot-label" aria-hidden="true">一食堂</div>
+        </div>
+
+        <!-- ========== 和平楼建筑轮廓热区：独立于一食堂，避免全图误触 ========== -->
+        <div class="building-interactive heping-interactive" id="hepingInteractive">
+          <img class="building-preview" src="images/heping-building.png" alt="" aria-hidden="true" draggable="false" />
+          <button class="building-hotspot" id="hepingHotspot" type="button" aria-label="打开和平楼详情"></button>
+          <div class="hotspot-label" aria-hidden="true">和平楼</div>
+        </div>
+      </div>
+
+      <!-- ========== 云雾入场特效 HTML 开始（可选功能） ========== -->
+      <div class="cloud-intro" aria-hidden="true">
+        <div class="cloud-intro__veil"></div>
+        <div class="cloud-intro__left"></div>
+        <div class="cloud-intro__right"></div>
+      </div>
+      <!-- ========== 云雾入场特效 HTML 结束 ========== -->
+
+      <div class="detail-overlay" id="detailOverlay" aria-hidden="true">
+        <section class="detail-card" id="infoPanel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+          <button class="close-button" id="closeButton" type="button" aria-label="关闭详情页">×</button>
+
+          <div class="detail-card-inner">
+            <div class="detail-media">
+              <div class="carousel" id="carousel">
+                <div class="carousel-track">
+                  <figure class="carousel-slide is-active">
+                    <button class="carousel-image-button" type="button" aria-label="放大查看第 1 张一食堂图片" data-slide="0">
+                      <img src="images/canteen-1.jpg" alt="一食堂航拍图 1" />
+                      <span class="image-zoom-hint" aria-hidden="true">⤢ 点击查看大图</span>
+                    </button>
+                  </figure>
+                  <figure class="carousel-slide">
+                    <button class="carousel-image-button" type="button" aria-label="放大查看第 2 张一食堂图片" data-slide="1">
+                      <img src="images/canteen-2.jpg" alt="一食堂航拍图 2" />
+                      <span class="image-zoom-hint" aria-hidden="true">⤢ 点击查看大图</span>
+                    </button>
+                  </figure>
+                  <figure class="carousel-slide">
+                    <button class="carousel-image-button" type="button" aria-label="放大查看第 3 张一食堂图片" data-slide="2">
+                      <img src="images/canteen-3.jpg" alt="一食堂航拍图 3" />
+                      <span class="image-zoom-hint" aria-hidden="true">⤢ 点击查看大图</span>
+                    </button>
+                  </figure>
+                </div>
+
+                <button class="carousel-nav prev" id="prevSlide" type="button" aria-label="上一张">‹</button>
+                <button class="carousel-nav next" id="nextSlide" type="button" aria-label="下一张">›</button>
+
+                <div class="carousel-dots" id="carouselDots" aria-label="轮播图分页">
+                  <button class="carousel-dot is-active" type="button" aria-label="查看第 1 张"></button>
+                  <button class="carousel-dot" type="button" aria-label="查看第 2 张"></button>
+                  <button class="carousel-dot" type="button" aria-label="查看第 3 张"></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-content" id="detailContent">
+              <h2 id="detailTitle">一食堂</h2>
+
+              <div class="detail-badges" id="detailBadges" aria-label="建筑特色标签">
+                <span class="detail-badge">华理红烧肉</span>
+                <span class="detail-badge">深夜食堂</span>
+              </div>
+
+              <div class="detail-text" id="detailText"></div>
+
+              <ul class="detail-highlights" id="detailHighlights">
+                <li><strong>位置：</strong>梅陇路130号</li>
+                <li><strong>楼层：</strong>共三层</li>
+                <li><strong>规模：</strong>就餐面积超2500㎡，座位近1100个</li>
+                <li><strong>特色：</strong>深夜食堂、华理红烧肉、支持小份/半份</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 轮播图大图预览：单击图片打开，点右上角 × 返回详情页 -->
+      <div class="photo-preview" id="photoPreview" aria-hidden="true">
+        <section class="photo-preview-frame" role="dialog" aria-modal="true" aria-label="建筑大图预览">
+          <img class="photo-preview-img" id="photoPreviewImage" alt="一食堂大图预览" />
+          <button class="photo-preview-close" id="closePhotoPreview" type="button" aria-label="关闭大图预览，返回详情页">×</button>
+          <span class="photo-preview-caption" id="photoPreviewCaption">一食堂 · 1 / 3</span>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- 音乐素材已保存在本地 audio/ 文件夹，无需联网。 -->
+  <audio id="campusMusic" preload="auto" loop>
+    <source src="audio/campus-background.ogg" type="audio/ogg" />
+    <source src="audio/campus-background.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="canteenPop" src="audio/pop.wav" preload="auto"></audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
